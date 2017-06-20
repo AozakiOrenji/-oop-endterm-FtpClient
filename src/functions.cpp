@@ -4,7 +4,7 @@
 
 #include "functions.h"
 
-int objMenu::print(){
+int menu::print(){
     int maxLength = 0;
     for(int i=0;i<menuSto.size();i++){
         if(menuSto[i][0].length() > maxLength){
@@ -12,17 +12,20 @@ int objMenu::print(){
         }
     }
     for(int i=0;i<menuSto.size();i++){
-        cout << i << setfill('.') << setw(maxLength+5-count(i))
+        cout << i+1 << setfill(' ') << setw(maxLength+4-count(i+1))
              << menuSto[i][0] << endl;
     }
+    return 0;
 }
-int objMenu::create(string arg1){
-//    vector<string> temp;
-//    temp.push_back(arg1);
-//    temp.push_back("true");
+int menu::create(string arg1){
     menuSto.push_back({arg1,"true"});
+    return 0;
 }
 
 int count(int arg1){
-    return (int)log10((double)arg1)+1;
+    if(arg1 == 0){
+        return 1;
+    }else{
+        return (int)log10((double)arg1)+1;
+    }
 }

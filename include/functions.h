@@ -15,10 +15,25 @@
 #include "cmath"
 #endif
 
-
 using namespace std;
 
-class objMenu{
+class ftpOpt{
+private:
+    string filename;
+    string currDir;
+public:
+    int connect();
+    int ls();
+    int cd();
+    int download();
+    int upload();
+    int mkdir();
+    int rm();
+    int rename();
+    int disconnect();
+};
+
+class menu{
 private:
     vector<vector<string>> menuSto;
 public:

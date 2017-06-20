@@ -5,6 +5,5 @@
 #include "functions.h"
 
 int main(){
-    objMenu objMenu1;
-    objMenu1.print();
+    return 0;
 }
