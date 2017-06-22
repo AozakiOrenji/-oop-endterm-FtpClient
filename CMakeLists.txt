@@ -14,4 +14,6 @@ add_executable(_oop_endterm_FtpClient ${VAR_USERPROJECT})
 
 #add_executable(_oop_endterm_FtpClient ${SOURCE_FILES})
 
+TARGET_LINK_LIBRARIES(_oop_endterm_FtpClient wininet)
+
 set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
