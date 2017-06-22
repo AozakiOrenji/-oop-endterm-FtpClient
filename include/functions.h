@@ -28,19 +28,25 @@ class ftpOpt{
 private:
     HINTERNET hInternet;
     HINTERNET hFtpSession;
+    bool ftpOpt_ftpPassive;
+    string ftpOpt_currHost;
+    string ftpOpt_currUsr;
+    string ftpOpt_filename;
+    string ftpOpt_currDir;
 public:
-    string filename;
-    string currDir;
-    int connect(string url, int port, string username, string password);
-    int requestCurrDir();
+    int connect(string url, int port, string username, string password, bool ftpPassive = false);
+    int updateCurrDir();
     int ls();
-    int cd();
+    int cd(string dir);
     int download();
     int upload();
     int mkdir();
     int rm();
     int rename();
     int disconnect();
+    string currDir();
+    string currHost();
+    string currUsr();
 };
 
 class menu{
@@ -55,3 +61,5 @@ int count(int arg1);            //count digital of an integer
 
 int console(int arg1);
 int console(string arg1);
+
+string parse_wininet_errno(int arg1);

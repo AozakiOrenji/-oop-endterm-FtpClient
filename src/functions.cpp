@@ -3,36 +3,82 @@
 //
 
 #include "functions.h"
+#include "wininet_errno.h"
 
-int ftpOpt::connect(string url, int port, string username, string password) {
-    hInternet = InternetOpen(NULL, INTERNET_OPEN_TYPE_DIRECT,
-                             NULL, NULL, 0);
-    if(hInternet == NULL){
+int ftpOpt::connect(string url, int port, string username, string password, bool ftpPassive){
+    hInternet = InternetOpen(nullptr, INTERNET_OPEN_TYPE_DIRECT,
+                             nullptr, nullptr, 0);
+    if(hInternet == nullptr){
         console(_OOP_FTPCLIENT_WININET_ERROR);
     }else{
-        hFtpSession = InternetConnect(hInternet, url.c_str(), port,
+        hFtpSession = InternetConnect(hInternet, url.c_str(), (INTERNET_PORT)port,
                                       username.c_str(), password.c_str(),
-                                      INTERNET_SERVICE_FTP, 0, 0);
-        if(hFtpSession == NULL){
+                                      INTERNET_SERVICE_FTP, ftpPassive?INTERNET_FLAG_PASSIVE:0, 0);
+        if(hFtpSession == nullptr){
             console(_OOP_FTPCLIENT_WININET_ERROR);
         }else{
+            ftpOpt_currHost = url;
+            ftpOpt_currUsr = username;
+            ftpOpt_ftpPassive = ftpPassive;
+            updateCurrDir();
             return 0;
         }
     }
     return _OOP_FTPCLIENT_FTPOPT_ERROR;
 }
 
-int ftpOpt::requestCurrDir(){
-    char tmp[256];
-    DWORD currDirSize = 256;
+int ftpOpt::updateCurrDir(){
+    char tmp[1024];
+    DWORD currDirSize = 1024;
     if(!FtpGetCurrentDirectory(hFtpSession, tmp, &currDirSize)){
         console(_OOP_FTPCLIENT_WININET_ERROR);
-        currDir = "undefined";
+        ftpOpt_currDir = "undefined";
         return _OOP_FTPCLIENT_FTPOPT_ERROR;
-    }else{
-        currDir = tmp;
-        return 0;
     }
+    ftpOpt_currDir = tmp;
+    return 0;
+}
+
+int ftpOpt::ls(){
+    HINTERNET hFind;
+    WIN32_FIND_DATA fd;
+    char currDir[1024];
+    strcpy(currDir, ftpOpt_currDir.c_str());
+    hFind = FtpFindFirstFile(hFtpSession, currDir, &fd, 0, 0);
+
+    if(hFind != nullptr){
+        do{
+            console(fd.cFileName);
+        }while(InternetFindNextFile(hFind, &fd));
+    }else{
+        console(_OOP_FTPCLIENT_WININET_ERROR);
+        return _OOP_FTPCLIENT_FTPOPT_ERROR;
+    }
+    return 0;
+}
+
+int ftpOpt::cd(string dir){
+    char charDir[1024];
+    strcpy(charDir, dir.c_str());
+    if(dir.substr(0,1) == "/"){
+        console("abs");
+    }else{
+        FtpSetCurrentDirectory(hFtpSession, charDir);
+    }
+    updateCurrDir();
+    return 0;
+}
+
+string ftpOpt::currDir(){
+    return ftpOpt_currDir;
+}
+
+string ftpOpt::currHost(){
+    return ftpOpt_currHost;
+}
+
+string ftpOpt::currUsr(){
+    return ftpOpt_currUsr;
 }
 
 int menu::print(){
@@ -56,29 +102,36 @@ int menu::create(string arg1){
 int count(int arg1){
     if(arg1 == 0){
         return 1;
-    }else{
-        return (int)log10((double)arg1)+1;
     }
+    return (int)log10((double)arg1)+1;
 }
 
 int console(int arg1){
-    //00006 0x00000006 not connected
-    //12007 0x00002ee7 net error
-    //12014 0x00002eee unauthorized
-    //12029 0x00002efd rejected
+    DWORD err = GetLastError();
+    //https://support.microsoft.com/en-us/help/193625/info-wininet-error-codes-12001-through-12156
+    //https://msdn.microsoft.com/en-us/library/windows/desktop/ms681381(v=vs.85).aspx
+    //00006 0x00000006 ERROR_INVALID_HANDLE
+    //12007 0x00002ee7 ERROR_INTERNET_NAME_NOT_RESOLVED
+    //12014 0x00002eee ERROR_INTERNET_INCORRECT_PASSWORD
+    //12029 0x00002efd ERROR_INTERNET_CANNOT_CONNECT
+    //12110 0x00002f4e ERROR_FTP_TRANSFER_IN_PROGRESS
     if(arg1 == _OOP_FTPCLIENT_WININET_ERROR){
-        cout << "Fatal error: " << "0x" << hex
-             << setw(8) << setfill('0') << GetLastError() << endl;
-        if(GetLastError() == 6){
+        cout << "Error " << "0x" << hex
+             << setw(8) << setfill('0') << err << " " << parse_wininet_errno((int)err) << endl;
+        if(err == 6){
             console("You were not connected.");
             console("You must connect to a remote host to continue.");
-        }else if(GetLastError() == 12007){
+        }else if(err == 12007){
             console("The given remote host was not resolved.");
-        }else if(GetLastError() == 12014){
+        }else if(err == 12014){
             console("Failed to authorize your session.");
-        }else if(GetLastError() == 12029){
-            console("Your request was rejected by remote host. Check your argument.");
+        }else if(err == 12029) {
+            console("Your request was rejected by remote host.");
+            console("Bad argument OR network communicate issue.");
+        }else if(err == 12110){
+            console("Please wait until transfer terminated");
         }else{
+            console("Unknown error. You may contact the author of this application");
         }
     }else if(arg1 == _OOP_FTPCLIENT_UNDEFINED_ERROR){
         cout << "Undefined error: " << "0x" << hex
@@ -89,10 +142,18 @@ int console(int arg1){
     }else{
         cout << arg1 << endl;
     }
-    return 0;
 }
 
 int console(string arg1){
     cout << arg1 << endl;
     return 0;
+}
+
+string parse_wininet_errno(int arg1) {
+    for(int i=0;i<59;i++){
+        if(wininet_errno[i] == arg1){
+            return wininet_errstr[i];
+        }
+    }
+    return "STOP_UNKNOWN";
 }
