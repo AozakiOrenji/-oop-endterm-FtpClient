@@ -13,16 +13,26 @@
 #include "vector"
 #include "string"
 #include "cmath"
+#include "wininet.h"
+#pragma comment(lib, "Wininet")
 #endif
 
 using namespace std;
 
+//on error CONSTs:
+const int _OOP_FTPCLIENT_UNDEFINED_ERROR = 1577267;
+const int _OOP_FTPCLIENT_WININET_ERROR = 25443;
+const int _OOP_FTPCLIENT_FTPOPT_ERROR = 416541;
+
 class ftpOpt{
 private:
+    HINTERNET hInternet;
+    HINTERNET hFtpSession;
+public:
     string filename;
     string currDir;
-public:
-    int connect();
+    int connect(string url, int port, string username, string password);
+    int requestCurrDir();
     int ls();
     int cd();
     int download();
@@ -43,3 +53,5 @@ public:
 
 int count(int arg1);            //count digital of an integer
 
+int console(int arg1);
+int console(string arg1);
