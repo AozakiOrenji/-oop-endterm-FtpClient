@@ -19,7 +19,10 @@
 
 using namespace std;
 
-const int _OOP_FTPCLIENT_PATH_SIZE = 1024;
+const int _OOP_FTPCLIENT_PATH_SIZE = 4096;
+const int _OOP_FTPCLIENT_TERMINAL_SIZE = 1024;
+
+const int _OOP_FTPCLIENT_TERMINAL_EXIT = 5461654;
 
 //on error CONSTs:
 const int _OOP_FTPCLIENT_UNDEFINED_ERROR = 1577267;
@@ -32,6 +35,7 @@ private:
     HINTERNET hInternet;
     HINTERNET hFtpSession;
     bool ftpOpt_ftpPassive;
+    bool ftpOpt_connected;
     string ftpOpt_currHost;
     string ftpOpt_currUsr;
     string ftpOpt_filename;
@@ -44,7 +48,8 @@ private:
      * FTP_TRANSFER_TYPE_UNKNOWN = FTP_TRANSFER_TYPE_BINARY
      */
 public:
-    int connect(string url, int port, string username, string password, bool ftpPassive = false);
+    ftpOpt();
+    int connect(string url, int port, string username, string password, bool ftpPassive = true);
     int updateCurrDir();
     int ls();
     int cd(string dir);
@@ -58,6 +63,20 @@ public:
     string currDir();
     string currHost();
     string currUsr();
+    bool isConnected();                                               //
+};
+
+class ftpOptTerminal{
+private:
+    string command;
+    ftpOpt object;
+public:
+    int init(ftpOpt obj);
+    //print dir, return command
+    string wait();
+    //parse usr command
+    int parse(string cmdStr);
+
 };
 
 class menu{
@@ -71,6 +90,8 @@ public:
 int count(int arg1);            //count digital of an integer
 
 int console(int arg1);
-int console(string arg1);
+int console(string arg1, bool endLine = true);
 
 string parse_wininet_errno(int arg1);
+
+vector<string> split(const string& s, char seperator);

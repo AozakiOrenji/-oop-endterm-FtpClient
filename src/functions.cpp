@@ -5,6 +5,15 @@
 #include "functions.h"
 #include "wininet_errno.h"
 
+ftpOpt::ftpOpt(){
+    ftpOpt_ftpPassive = true;
+    ftpOpt_connected = false;
+    ftpOpt_currHost = "";
+    ftpOpt_currUsr = "";
+    ftpOpt_filename = "";
+    ftpOpt_currDir = "";
+}
+
 int ftpOpt::connect(string url, int port, string username, string password, bool ftpPassive){
     hInternet = InternetOpen(nullptr, INTERNET_OPEN_TYPE_DIRECT,
                              nullptr, nullptr, 0);
@@ -71,13 +80,13 @@ int ftpOpt::cd(string dir){
 int ftpOpt::ftpGet(string pRemote, string pLocal, bool overwrite){
     char pathRemote[_OOP_FTPCLIENT_PATH_SIZE];
     char pathLocal[_OOP_FTPCLIENT_PATH_SIZE];
-    pathRemote = pRemote.c_str();
-    pathLocal = pLocal.c_str();
+    strcpy(pathRemote, pRemote.c_str());
+    strcpy(pathLocal, pLocal.c_str());
     if(!FtpGetFile(
             hFtpSession,
             pathRemote,
             pathLocal,
-            !overwrite,
+            (BOOL)!overwrite,
             FILE_ATTRIBUTE_ARCHIVE,
             (DWORD)ftpOpt_transferMode,
             0)
@@ -92,8 +101,8 @@ int ftpOpt::ftpGet(string pRemote, string pLocal, bool overwrite){
 int ftpOpt::ftpPut(string pLocal, string pRemote){
     char pathRemote[_OOP_FTPCLIENT_PATH_SIZE];
     char pathLocal[_OOP_FTPCLIENT_PATH_SIZE];
-    pathRemote = pRemote.c_str();
-    pathLocal = pLocal.c_str();
+    strcpy(pathRemote, pRemote.c_str());
+    strcpy(pathLocal, pLocal.c_str());
     if(!FtpPutFile(
             hFtpSession,
             pathLocal,
@@ -110,7 +119,7 @@ int ftpOpt::ftpPut(string pLocal, string pRemote){
 
 int ftpOpt::mkdir(string dir){
     char dirName[_OOP_FTPCLIENT_PATH_SIZE];
-    dirName = dir.c_str();
+    strcpy(dirName, dir.c_str());
     if(!FtpCreateDirectory(hFtpSession, dirName)){
         console(_OOP_FTPCLIENT_WININET_ERROR);
         return _OOP_FTPCLIENT_FTPOPT_ERROR;
@@ -120,7 +129,7 @@ int ftpOpt::mkdir(string dir){
 
 int ftpOpt::rm(string file){
     char fileName[_OOP_FTPCLIENT_PATH_SIZE];
-    fileName = file.c_str();
+    strcpy(fileName, file.c_str());
     if(!FtpDeleteFile(hFtpSession, fileName)){
         console(_OOP_FTPCLIENT_WININET_ERROR);
         return _OOP_FTPCLIENT_FTPOPT_ERROR;
@@ -130,7 +139,7 @@ int ftpOpt::rm(string file){
 
 int ftpOpt::rmdir(string dir){
     char dirName[_OOP_FTPCLIENT_PATH_SIZE];
-    dirName = dir.c_str();
+    strcpy(dirName, dir.c_str());
     if(!FtpRemoveDirectory(hFtpSession, dirName)){
         console(_OOP_FTPCLIENT_WININET_ERROR);
         return _OOP_FTPCLIENT_FTPOPT_ERROR;
@@ -141,8 +150,8 @@ int ftpOpt::rmdir(string dir){
 int ftpOpt::rename(string oldFile, string newFile){
     char oldFileName[_OOP_FTPCLIENT_PATH_SIZE];
     char newFileName[_OOP_FTPCLIENT_PATH_SIZE];
-    oldFileName = oldFile.c_str();
-    newFileName = newFile.c_str();
+    strcpy(oldFileName, oldFile.c_str());
+    strcpy(newFileName, newFile.c_str());
     if(!FtpRenameFile(hFtpSession, oldFileName, newFileName)){
         console(_OOP_FTPCLIENT_WININET_ERROR);
         return _OOP_FTPCLIENT_FTPOPT_ERROR;
@@ -172,6 +181,43 @@ string ftpOpt::currHost(){
 
 string ftpOpt::currUsr(){
     return ftpOpt_currUsr;
+}
+
+bool ftpOpt::isConnected(){
+    return ftpOpt_connected;
+}
+
+int ftpOptTerminal::init(ftpOpt obj){
+    object = obj;
+}
+
+string ftpOptTerminal::wait(){
+    cout << endl;
+    if(object.isConnected()){
+        console(object.currDir() + ">", false);
+    }else{
+        console("ftp>", false);
+    }
+    char str[_OOP_FTPCLIENT_TERMINAL_SIZE];
+    cin.getline(str,_OOP_FTPCLIENT_TERMINAL_SIZE);
+    string strObj = str;
+    return strObj;
+}
+
+int ftpOptTerminal::parse(string cmdStr){
+    vector<string> strArray = split(cmdStr, ' ');
+    if(strArray[0] == "exit"){
+        return _OOP_FTPCLIENT_TERMINAL_EXIT;
+    }else{
+        console("Invalid command. Type 'help', 'man' or '?' for user manual", false);
+    }
+/*    string del = " ";
+    string tmpStr;
+    strArray.push_back(strtok((char*)cmdStr.c_str(), del.c_str()));
+    while(tmpStr){
+        tmpStr = strtok(nullptr, del.c_str());
+    }
+    */
 }
 
 int menu::print(){
@@ -237,8 +283,12 @@ int console(int arg1){
     }
 }
 
-int console(string arg1){
-    cout << arg1 << endl;
+int console(string arg1, bool endLine){
+    if(endLine){
+        cout << arg1 << endl;
+    }else{
+        cout << arg1;
+    }
     return 0;
 }
 
@@ -249,4 +299,23 @@ string parse_wininet_errno(int arg1) {
         }
     }
     return "STOP_UNKNOWN";
+}
+
+vector<string> split(const string& s, char seperator){
+    vector<string> output;
+
+    string::size_type prev_pos = 0, pos = 0;
+
+    while((pos = s.find(seperator, pos)) != string::npos)
+    {
+        string substring( s.substr(prev_pos, pos-prev_pos) );
+
+        output.push_back(substring);
+
+        prev_pos = ++pos;
+    }
+
+    output.push_back(s.substr(prev_pos, pos-prev_pos)); // Last word
+
+    return output;
 }
