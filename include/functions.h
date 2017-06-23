@@ -28,18 +28,20 @@ const int _OOP_FTPCLIENT_TERMINAL_EXIT = 5461654;
 const int _OOP_FTPCLIENT_UNDEFINED_ERROR = 1577267;
 const int _OOP_FTPCLIENT_WININET_ERROR = 25443;
 const int _OOP_FTPCLIENT_FTPOPT_ERROR = 416541;
+const int _OOP_FTPCLIENT_FTPOPT_BAD_COMMAND = 6548645;
+const int _OOP_FTPCLIENT_FTPOPT_BAD_ARGUMENT = 5616513;
 const int _OOP_FTPCLIENT_FTPOPT_FILEEXIST = 8765456;
 
 class ftpOpt{
 private:
     HINTERNET hInternet;
     HINTERNET hFtpSession;
-    bool ftpOpt_ftpPassive;
-    bool ftpOpt_connected;
-    string ftpOpt_currHost;
-    string ftpOpt_currUsr;
-    string ftpOpt_filename;
-    string ftpOpt_currDir;
+    bool ftpOpt_ftpPassive = true;
+    bool ftpOpt_connected = false;
+    string ftpOpt_currHost = "";
+    string ftpOpt_currUsr = "";
+    string ftpOpt_filename = "";
+    string ftpOpt_currDir = "";
     int ftpOpt_transferMode = FTP_TRANSFER_TYPE_UNKNOWN;
     /*
      * transferMode can be:
@@ -48,8 +50,7 @@ private:
      * FTP_TRANSFER_TYPE_UNKNOWN = FTP_TRANSFER_TYPE_BINARY
      */
 public:
-    ftpOpt();
-    int connect(string url, int port, string username, string password, bool ftpPassive = true);
+    int connect(string url, string username = NULL, string password = NULL, int port = 21, bool ftpPassive = true);
     int updateCurrDir();
     int ls();
     int cd(string dir);
@@ -70,13 +71,13 @@ class ftpOptTerminal{
 private:
     string command;
     ftpOpt object;
+    bool firstLine = true;
 public:
     int init(ftpOpt obj);
     //print dir, return command
     string wait();
     //parse usr command
     int parse(string cmdStr);
-
 };
 
 class menu{

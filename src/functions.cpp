@@ -4,17 +4,7 @@
 
 #include "functions.h"
 #include "wininet_errno.h"
-
-ftpOpt::ftpOpt(){
-    ftpOpt_ftpPassive = true;
-    ftpOpt_connected = false;
-    ftpOpt_currHost = "";
-    ftpOpt_currUsr = "";
-    ftpOpt_filename = "";
-    ftpOpt_currDir = "";
-}
-
-int ftpOpt::connect(string url, int port, string username, string password, bool ftpPassive){
+int ftpOpt::connect(string url, string username, string password, int port, bool ftpPassive){
     hInternet = InternetOpen(nullptr, INTERNET_OPEN_TYPE_DIRECT,
                              nullptr, nullptr, 0);
     if(hInternet == nullptr){
@@ -192,7 +182,11 @@ int ftpOptTerminal::init(ftpOpt obj){
 }
 
 string ftpOptTerminal::wait(){
-    cout << endl;
+    if(!firstLine){
+        cout << endl;
+    }else{
+        firstLine = false;
+    }
     if(object.isConnected()){
         console(object.currDir() + ">", false);
     }else{
@@ -204,20 +198,22 @@ string ftpOptTerminal::wait(){
     return strObj;
 }
 
-int ftpOptTerminal::parse(string cmdStr){
+int ftpOptTerminal::parse(string cmdStr) {
     vector<string> strArray = split(cmdStr, ' ');
     if(strArray[0] == "exit"){
         return _OOP_FTPCLIENT_TERMINAL_EXIT;
-    }else{
-        console("Invalid command. Type 'help', 'man' or '?' for user manual", false);
     }
-/*    string del = " ";
-    string tmpStr;
-    strArray.push_back(strtok((char*)cmdStr.c_str(), del.c_str()));
-    while(tmpStr){
-        tmpStr = strtok(nullptr, del.c_str());
+    if(strArray[0] == "connect"){
+        for(int i=1;i<strArray.size();i+=2){
+            if(strArray[i].substr(0,1) == "-"){
+
+            }
+            console(_OOP_FTPCLIENT_FTPOPT_BAD_ARGUMENT);
+            return _OOP_FTPCLIENT_FTPOPT_BAD_ARGUMENT;
+        }
     }
-    */
+    console(_OOP_FTPCLIENT_FTPOPT_BAD_COMMAND);
+    return _OOP_FTPCLIENT_FTPOPT_BAD_COMMAND;
 }
 
 int menu::print(){
@@ -239,13 +235,13 @@ int menu::create(string arg1){
 }
 
 int count(int arg1){
-    if(arg1 == 0){
+    if (arg1 == 0) {
         return 1;
     }
     return (int)log10((double)arg1)+1;
 }
 
-int console(int arg1){
+int console(int arg1) {
     DWORD err = GetLastError();
     //https://support.microsoft.com/en-us/help/193625/info-wininet-error-codes-12001-through-12156
     //https://msdn.microsoft.com/en-us/library/windows/desktop/ms681381(v=vs.85).aspx
@@ -254,31 +250,41 @@ int console(int arg1){
     //12014 0x00002eee ERROR_INTERNET_INCORRECT_PASSWORD
     //12029 0x00002efd ERROR_INTERNET_CANNOT_CONNECT
     //12110 0x00002f4e ERROR_FTP_TRANSFER_IN_PROGRESS
-    if(arg1 == _OOP_FTPCLIENT_WININET_ERROR){
+    if (arg1 == _OOP_FTPCLIENT_WININET_ERROR) {
         cout << "Error " << "0x" << hex
-             << setw(8) << setfill('0') << err << " " << parse_wininet_errno((int)err) << endl;
-        if(err == 6){
+             << setw(8) << setfill('0') << err << " " << parse_wininet_errno((int) err) << endl;
+        if (err == 6) {
             console("You were not connected.");
             console("You must connect to a remote host to continue.");
-        }else if(err == 12007){
+        } else if (err == 12007) {
             console("The given remote host was not resolved.");
-        }else if(err == 12014){
+        } else if (err == 12014) {
             console("Failed to authorize your session.");
-        }else if(err == 12029) {
+        } else if (err == 12029) {
             console("Your request was rejected by remote host.");
             console("Bad argument OR network communicate issue.");
-        }else if(err == 12110){
+        } else if (err == 12110) {
             console("Please wait until transfer terminated");
-        }else{
+        } else {
             console("Unknown error. You may contact the author of this application");
         }
-    }else if(arg1 == _OOP_FTPCLIENT_UNDEFINED_ERROR){
+    } else if (arg1 == _OOP_FTPCLIENT_UNDEFINED_ERROR) {
         cout << "Undefined error: " << "0x" << hex
              << setw(8) << setfill('0') << arg1 << endl;
-    }else if(arg1 == _OOP_FTPCLIENT_FTPOPT_ERROR){
+    } else if (arg1 == _OOP_FTPCLIENT_FTPOPT_ERROR) {
         cout << "FtpOpt error: " << "0x" << hex
              << setw(8) << setfill('0') << arg1 << endl;
-    }else{
+    } else if (arg1 == _OOP_FTPCLIENT_FTPOPT_BAD_ARGUMENT) {
+        cout << "FtpOpt error: " << "0x" << hex
+             << setw(8) << setfill('0') << arg1 << endl;
+        console("Bad Argument.");
+        console("Type 'help', 'man' or '?' for user manual.");
+    } else if (arg1 == _OOP_FTPCLIENT_FTPOPT_BAD_COMMAND) {
+        cout << "FtpOpt error: " << "0x" << hex
+             << setw(8) << setfill('0') << arg1 << endl;
+        console("Bad Command.");
+        console("Type 'help', 'man' or '?' for user manual.");
+    } else {
         cout << arg1 << endl;
     }
 }
