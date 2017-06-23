@@ -19,10 +19,13 @@
 
 using namespace std;
 
+const int _OOP_FTPCLIENT_PATH_SIZE = 1024;
+
 //on error CONSTs:
 const int _OOP_FTPCLIENT_UNDEFINED_ERROR = 1577267;
 const int _OOP_FTPCLIENT_WININET_ERROR = 25443;
 const int _OOP_FTPCLIENT_FTPOPT_ERROR = 416541;
+const int _OOP_FTPCLIENT_FTPOPT_FILEEXIST = 8765456;
 
 class ftpOpt{
 private:
@@ -33,17 +36,25 @@ private:
     string ftpOpt_currUsr;
     string ftpOpt_filename;
     string ftpOpt_currDir;
+    int ftpOpt_transferMode = FTP_TRANSFER_TYPE_UNKNOWN;
+    /*
+     * transferMode can be:
+     * FTP_TRANSFER_TYPE_ASCII
+     * FTP_TRANSFER_TYPE_BINARY
+     * FTP_TRANSFER_TYPE_UNKNOWN = FTP_TRANSFER_TYPE_BINARY
+     */
 public:
     int connect(string url, int port, string username, string password, bool ftpPassive = false);
     int updateCurrDir();
     int ls();
     int cd(string dir);
-    int download();
-    int upload();
-    int mkdir();
-    int rm();
-    int rename();
-    int disconnect();
+    int ftpGet(string pRemote, string pLocal, bool overwrite = false);//
+    int ftpPut(string pLocal, string pRemote);                        //
+    int mkdir(string dir);                                            //
+    int rm(string file);                                              //
+    int rmdir(string dir);                                            //
+    int rename(string oldFile, string newFile);                       //
+    int disconnect();                                                 //
     string currDir();
     string currHost();
     string currUsr();

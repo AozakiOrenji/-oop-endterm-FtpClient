@@ -28,8 +28,8 @@ int ftpOpt::connect(string url, int port, string username, string password, bool
 }
 
 int ftpOpt::updateCurrDir(){
-    char tmp[1024];
-    DWORD currDirSize = 1024;
+    char tmp[_OOP_FTPCLIENT_PATH_SIZE];
+    DWORD currDirSize = _OOP_FTPCLIENT_PATH_SIZE;
     if(!FtpGetCurrentDirectory(hFtpSession, tmp, &currDirSize)){
         console(_OOP_FTPCLIENT_WININET_ERROR);
         ftpOpt_currDir = "undefined";
@@ -42,7 +42,7 @@ int ftpOpt::updateCurrDir(){
 int ftpOpt::ls(){
     HINTERNET hFind;
     WIN32_FIND_DATA fd;
-    char currDir[1024];
+    char currDir[_OOP_FTPCLIENT_PATH_SIZE];
     strcpy(currDir, ftpOpt_currDir.c_str());
     hFind = FtpFindFirstFile(hFtpSession, currDir, &fd, 0, 0);
 
@@ -58,14 +58,107 @@ int ftpOpt::ls(){
 }
 
 int ftpOpt::cd(string dir){
-    char charDir[1024];
+    char charDir[_OOP_FTPCLIENT_PATH_SIZE];
     strcpy(charDir, dir.c_str());
-    if(dir.substr(0,1) == "/"){
-        console("abs");
-    }else{
-        FtpSetCurrentDirectory(hFtpSession, charDir);
-    }
+    if(!FtpSetCurrentDirectory(hFtpSession, charDir)){
+        console(_OOP_FTPCLIENT_WININET_ERROR);
+        return _OOP_FTPCLIENT_FTPOPT_ERROR;
+    };
     updateCurrDir();
+    return 0;
+}
+
+int ftpOpt::ftpGet(string pRemote, string pLocal, bool overwrite){
+    char pathRemote[_OOP_FTPCLIENT_PATH_SIZE];
+    char pathLocal[_OOP_FTPCLIENT_PATH_SIZE];
+    pathRemote = pRemote.c_str();
+    pathLocal = pLocal.c_str();
+    if(!FtpGetFile(
+            hFtpSession,
+            pathRemote,
+            pathLocal,
+            !overwrite,
+            FILE_ATTRIBUTE_ARCHIVE,
+            (DWORD)ftpOpt_transferMode,
+            0)
+      )
+    {
+        console(_OOP_FTPCLIENT_WININET_ERROR);
+        return _OOP_FTPCLIENT_FTPOPT_ERROR;
+    }
+    return 0;
+}
+
+int ftpOpt::ftpPut(string pLocal, string pRemote){
+    char pathRemote[_OOP_FTPCLIENT_PATH_SIZE];
+    char pathLocal[_OOP_FTPCLIENT_PATH_SIZE];
+    pathRemote = pRemote.c_str();
+    pathLocal = pLocal.c_str();
+    if(!FtpPutFile(
+            hFtpSession,
+            pathLocal,
+            pathRemote,
+            (DWORD)ftpOpt_transferMode,
+            0)
+      )
+    {
+        console(_OOP_FTPCLIENT_WININET_ERROR);
+        return _OOP_FTPCLIENT_FTPOPT_ERROR;
+    }
+    return 0;
+}
+
+int ftpOpt::mkdir(string dir){
+    char dirName[_OOP_FTPCLIENT_PATH_SIZE];
+    dirName = dir.c_str();
+    if(!FtpCreateDirectory(hFtpSession, dirName)){
+        console(_OOP_FTPCLIENT_WININET_ERROR);
+        return _OOP_FTPCLIENT_FTPOPT_ERROR;
+    }
+    return 0;
+}
+
+int ftpOpt::rm(string file){
+    char fileName[_OOP_FTPCLIENT_PATH_SIZE];
+    fileName = file.c_str();
+    if(!FtpDeleteFile(hFtpSession, fileName)){
+        console(_OOP_FTPCLIENT_WININET_ERROR);
+        return _OOP_FTPCLIENT_FTPOPT_ERROR;
+    }
+    return 0;
+}
+
+int ftpOpt::rmdir(string dir){
+    char dirName[_OOP_FTPCLIENT_PATH_SIZE];
+    dirName = dir.c_str();
+    if(!FtpRemoveDirectory(hFtpSession, dirName)){
+        console(_OOP_FTPCLIENT_WININET_ERROR);
+        return _OOP_FTPCLIENT_FTPOPT_ERROR;
+    }
+    return 0;
+}
+
+int ftpOpt::rename(string oldFile, string newFile){
+    char oldFileName[_OOP_FTPCLIENT_PATH_SIZE];
+    char newFileName[_OOP_FTPCLIENT_PATH_SIZE];
+    oldFileName = oldFile.c_str();
+    newFileName = newFile.c_str();
+    if(!FtpRenameFile(hFtpSession, oldFileName, newFileName)){
+        console(_OOP_FTPCLIENT_WININET_ERROR);
+        return _OOP_FTPCLIENT_FTPOPT_ERROR;
+    }
+    return 0;
+}
+
+int ftpOpt::disconnect(){
+    if(!(bool)InternetCloseHandle(hFtpSession)){
+        console(_OOP_FTPCLIENT_WININET_ERROR);
+        return _OOP_FTPCLIENT_FTPOPT_ERROR;
+    }
+    if(!(bool)InternetCloseHandle(hInternet)){
+        console(_OOP_FTPCLIENT_WININET_ERROR);
+        return _OOP_FTPCLIENT_FTPOPT_ERROR;
+    };
     return 0;
 }
 
