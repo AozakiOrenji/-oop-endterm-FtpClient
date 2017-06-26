@@ -50,7 +50,7 @@ private:
      * FTP_TRANSFER_TYPE_UNKNOWN = FTP_TRANSFER_TYPE_BINARY
      */
 public:
-    int connect(string url, string username = NULL, string password = NULL, int port = 21, bool ftpPassive = true);
+    int connect(string url, string username = nullptr, string password = nullptr, int port = 21, bool ftpPassive = true);
     int updateCurrDir();
     int ls();
     int cd(string dir);
@@ -77,6 +77,8 @@ public:
     //print dir, return command
     string wait();
     //parse usr command
+     /////// Warning: argument unique is not being check. ////////
+    ///////      New argument will override old one.     ////////
     int parse(string cmdStr);
 };
 

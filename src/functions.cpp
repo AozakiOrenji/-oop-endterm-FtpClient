@@ -198,19 +198,107 @@ string ftpOptTerminal::wait(){
     return strObj;
 }
 
-int ftpOptTerminal::parse(string cmdStr) {
+int ftpOptTerminal::parse(string cmdStr){
     vector<string> strArray = split(cmdStr, ' ');
+    vector<string> argStorage;
     if(strArray[0] == "exit"){
         return _OOP_FTPCLIENT_TERMINAL_EXIT;
     }
-    if(strArray[0] == "connect"){
-        for(int i=1;i<strArray.size();i+=2){
-            if(strArray[i].substr(0,1) == "-"){
-
+    if(strArray[0] == "connect"
+       || strArray[0] == "link"){
+        for(int i=1;i<strArray.size();i++){
+            if(strArray[i].substr(0,1) == "-"
+               && i+1 < strArray.size()
+               && strArray[i+1].substr(0,1) != "-"){
+                if(strArray[i].substr(1) == "port"
+                   || strArray[i].substr(1) == "usr"
+                   || strArray[i].substr(1) == "pw"
+                   || strArray[i].substr(1) == "mode"){
+                    argStorage.push_back(strArray[i].substr(1));
+                    argStorage.push_back(strArray[i+1]);
+                    i++;
+                }else{
+                    console(_OOP_FTPCLIENT_FTPOPT_BAD_ARGUMENT);
+                    return _OOP_FTPCLIENT_FTPOPT_BAD_ARGUMENT;
+                }
+            }else if(strArray[i].substr(0,1) != "-"){
+                argStorage.emplace_back("url");
+                argStorage.push_back(strArray[i]);
+            }else{
+                console(_OOP_FTPCLIENT_FTPOPT_BAD_ARGUMENT);
+                return _OOP_FTPCLIENT_FTPOPT_BAD_ARGUMENT;
             }
+        }
+        //call this func here
+
+        return 0;
+    }
+    if(strArray[0] == "dc"
+       || strArray[0] == "disconnect"){
+        //Accept no argument
+        if(strArray.size() > 1){
             console(_OOP_FTPCLIENT_FTPOPT_BAD_ARGUMENT);
             return _OOP_FTPCLIENT_FTPOPT_BAD_ARGUMENT;
         }
+        //call this func here
+
+        return 0;
+    }
+    if(strArray[0] == "cd"){
+        //Accept {1,1} string argument
+        if(strArray[1].substr(0,1) == "-"){
+            console(_OOP_FTPCLIENT_FTPOPT_BAD_ARGUMENT);
+            return _OOP_FTPCLIENT_FTPOPT_BAD_ARGUMENT;
+        }
+        //call this func here
+
+        return 0;
+    }
+    if(strArray[0] == "ls"
+       || strArray[0] == "ll"
+       || strArray[0] == "dir"){
+        //Accept no argument
+        if(strArray.size() > 1){
+            console(_OOP_FTPCLIENT_FTPOPT_BAD_ARGUMENT);
+            return _OOP_FTPCLIENT_FTPOPT_BAD_ARGUMENT;
+        }
+        //call this func here
+
+        return 0;
+    }
+    if(strArray[0] == "pull"
+       || strArray[0] == "wget"
+       || strArray[0] == "get"
+       || strArray[0] == "download"
+       || strArray[0] == "clone"){
+        for(int i=1;i<strArray.size();i++){
+            if(strArray[i].substr(0,1) == "-"
+               && i+1 < strArray.size()
+               && strArray[i+1].substr(0,1) != "-"){
+                if(strArray[i].substr(1) == "l"
+                   || strArray[i].substr(1) == "local") {
+                    //define local file
+                    argStorage.push_back("local");
+                    argStorage.push_back(strArray[i + 1]);
+                    i++;
+                }else if(strArray[i].substr(1) == "r"
+                         || strArray[i].substr(1) == "remote") {
+                    //define remote file
+                    argStorage.push_back("remote");
+                    argStorage.push_back(strArray[i + 1]);
+                }else{
+                    console(_OOP_FTPCLIENT_FTPOPT_BAD_ARGUMENT);
+                    return _OOP_FTPCLIENT_FTPOPT_BAD_ARGUMENT;
+                }
+            }else if(strArray[i].substr(0,1) == "-"
+                     && i+1 < strArray.size()
+                     && strArray[i+1].substr(0,1) == "-"){
+                /////////incomplete///////////
+            }
+        }
+        //call this func here
+
+        return 0;
     }
     console(_OOP_FTPCLIENT_FTPOPT_BAD_COMMAND);
     return _OOP_FTPCLIENT_FTPOPT_BAD_COMMAND;
@@ -229,6 +317,7 @@ int menu::print(){
     }
     return 0;
 }
+
 int menu::create(string arg1){
     menuSto.push_back({arg1,"true"});
     return _OOP_FTPCLIENT_UNDEFINED_ERROR;
