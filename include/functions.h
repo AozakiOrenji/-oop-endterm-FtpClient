@@ -8,6 +8,7 @@
 
 #ifndef OOP_ENDTERM_FTPCLIENT_FUNCTIONS_H
 #define OOP_ENDTERM_FTPCLIENT_FUNCTIONS_H
+#include "unistd.h"
 #include "iostream"
 #include "iomanip"
 #include "vector"
@@ -40,9 +41,12 @@ private:
     bool ftpOpt_connected = false;
     string ftpOpt_currHost = "";
     string ftpOpt_currUsr = "";
+    string ftpOpt_currPass = "";
+    int    ftpOpt_currPort = 0;
     string ftpOpt_filename = "";
     string ftpOpt_currDir = "";
     int ftpOpt_transferMode = FTP_TRANSFER_TYPE_UNKNOWN;
+    bool cdHappened = false;
     /*
      * transferMode can be:
      * FTP_TRANSFER_TYPE_ASCII
@@ -50,21 +54,24 @@ private:
      * FTP_TRANSFER_TYPE_UNKNOWN = FTP_TRANSFER_TYPE_BINARY
      */
 public:
-    int connect(string url, string username = nullptr, string password = nullptr, int port = 21, bool ftpPassive = true);
+    int connect(string url, string username = nullptr,
+                string password = nullptr, int port = 21,
+                bool ftpPassive = true, bool keepDir = false);
     int updateCurrDir();
     int ls();
     int cd(string dir);
-    int ftpGet(string pRemote, string pLocal, bool overwrite = false);//
-    int ftpPut(string pLocal, string pRemote);                        //
-    int mkdir(string dir);                                            //
-    int rm(string file);                                              //
-    int rmdir(string dir);                                            //
-    int rename(string oldFile, string newFile);                       //
-    int disconnect();                                                 //
+    int ftpGet(string pRemote, string pLocal,
+               bool overwrite = false);
+    int ftpPut(string pLocal, string pRemote);
+    int mkdir(string dir);
+    int rm(string file);
+    int rmdir(string dir);
+    int rename(string oldFile, string newFile);
+    int disconnect();
     string currDir();
     string currHost();
     string currUsr();
-    bool isConnected();                                               //
+    bool isConnected();                             //
 };
 
 class ftpOptTerminal{
@@ -98,3 +105,7 @@ int console(string arg1, bool endLine = true);
 string parse_wininet_errno(int arg1);
 
 vector<string> split(const string& s, char seperator);
+
+bool isElementOf(string arg1, vector<string> arg2);
+
+int toNumber(string str);
