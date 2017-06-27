@@ -1,6 +1,8 @@
 //
 // Created by Aozak on 2017/6/20.
 //
+// Target: 800 lines of code
+//
 
 #include "functions.h"
 #include "wininet_errno.h"
@@ -471,10 +473,10 @@ int ftpOptTerminal::parse(string cmdStr){
             if (strArray[i].substr(0, 1) == "-" && i + 1 < strArray.size() && strArray[i + 1].substr(0, 1) != "-") {
                 //if it is an argument
                 if (isElementOf(strArray[i].substr(1),
-                                {"local", "l"})) {
+                                {"old", "o"})) {
                     oldName = strArray[i + 1];
                 } else if (isElementOf(strArray[i].substr(1),
-                                       {"remote", "r"})) {
+                                       {"new", "n"})) {
                     newName = strArray[i + 1];
                 } else {
                     console(_OOP_FTPCLIENT_FTPOPT_BAD_ARGUMENT);
@@ -503,8 +505,105 @@ int ftpOptTerminal::parse(string cmdStr){
         object.rename(oldName, newName);
         return 0;
     }
+    if(isElementOf(strArray[0], {"man", "?", "help", "？"})){
+        //default argument init
+        string helpStr;
+        for (int i = 1; i < strArray.size(); i++){
+            helpStr = strArray[i];
+        }
+        //call this func here
+        help(helpStr);
+        return 0;
+    }
     console(_OOP_FTPCLIENT_FTPOPT_BAD_COMMAND);
     return _OOP_FTPCLIENT_FTPOPT_BAD_COMMAND;
+}
+
+int ftpOptTerminal::help(string command){
+    if(isElementOf(command, {"connect", "link"})){
+        console(
+            "Usage:\n"
+            "    connect|link [-port|:|v <port> -username|u <user> -password|p <pass>]\n"
+            "Start a session with a remote ftp server.\n"
+        );
+    }else if(isElementOf(command, {"dc", "disconnect"})){
+        console(
+            "Usage:\n"
+            "    dc|disconnect\n"
+            "Ends session with the current remote computer.\n"
+        );
+    }else if(isElementOf(command, {"cd"})){
+        console(
+            "Usage:\n"
+            "    cd <dir>\n"
+            "Sets the current working location to a specified location.\n"
+        );
+    }else if(isElementOf(command, {"ls", "dir", "ll"})){
+        console(
+            "Usage:\n"
+            "    ls|dir\n"
+            "Gets the items and child items in the current locations.\n"
+        );
+    }else if(isElementOf(command, {"download", "get", "pull"})){
+        console(
+            "Usage:\n"
+            "    get|pull [-r|remote] <remote_file> [-l|local] <local_file> -[o|overwrite]\n"
+            "Gets a specified file from current server.\n"
+        );
+    }else if(isElementOf(command, {"upload", "put", "push"})){
+        console(
+            "Usage:\n"
+            "    put|push [-l|local] <local_file> [-r|remote] <remote_file>\n"
+            "Push a specified file to current server.\n"
+        );
+    }else if(isElementOf(command, {"mkdir"})){
+        console(
+            "Usage:\n"
+            "    mkdir <dirName>\n"
+            "Creates a new directory on the remote server.\n"
+        );
+    }else if(isElementOf(command, {"rmdir"})){
+        console(
+            "Usage:\n"
+            "    rmdir <dirName>\n"
+            "Deletes the specified directory on the remote server.\n"
+        );
+    }else if(isElementOf(command, {"rm"})){
+        console(
+            "Usage:\n"
+            "    rm <fileName>\n"
+            "Deletes the specified file on the remote server.\n"
+        );
+    }else if(isElementOf(command, {"rename", "mv"})){
+        console(
+            "Usage:\n"
+            "    rename|mv [-o|old] <old_name> [-n|new] <new_name>\n"
+            "Rename a file on the remote server.\n"
+        );
+    }else if(isElementOf(command, {"man"})){
+        console(
+            "All vaild commands:\n"
+            "man\n"
+            "exit\n"
+            "connect|link\n"
+            "dc|disconnect\n"
+            "cd\n"
+            "ls|ll|dir\n"
+            "download|get|pull\n"
+            "upload|put|push\n"
+            "mkdir\n"
+            "rmdir\n"
+            "rm\n"
+            "rename|mv\n"
+        );
+    }else if(command == ""){
+        console(
+            "Which manual page do you want?\n"
+            "Type \"man man\" for all available commands\n"
+        );
+    }else{
+        console("Sorry, we have no manual for " + command + ".");
+    }
 }
 
 int menu::print(){

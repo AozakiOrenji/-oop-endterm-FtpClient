@@ -9,15 +9,8 @@ int main(){
     ftpOptTerminal  ter;
     ter.init(ftp);
 
+    //it's magic!
     while(ter.parse(ter.wait()) != _OOP_FTPCLIENT_TERMINAL_EXIT);
 
     return 0;
 }
-
-/*
-console("ftp>connect ct.ftp.zeus.smartgslb.com -port 21 -usr ftp@touko.host.smartgslb.com -pw jstaccit");
-ftp.connect("ct.ftp.zeus.smartgslb.com", 21, "ftp@touko.host.smartgslb.com", "jstaccit", true);
-
-console(ftp.currDir() + ">ls");
-ftp.ls();
-*/

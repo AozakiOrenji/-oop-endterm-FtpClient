@@ -71,11 +71,26 @@ public:
     string currDir();
     string currHost();
     string currUsr();
-    bool isConnected();                             //
+    bool isConnected();
 };
 
 class ftpOptTerminal{
 private:
+    /*
+     * vaild command:
+     * exit
+     * connect, link
+     * dc, disconnect
+     * cd
+     * ls, dir, ll
+     * download, get, pull
+     * upload, put, push
+     * mkdir
+     * rm
+     * rmdir
+     * rename, mv
+     * help, ?, man
+     */
     string command;
     ftpOpt object;
     bool firstLine = true;
@@ -87,6 +102,9 @@ public:
      /////// Warning: argument unique is not being check. ////////
     ///////      New argument will override old one.     ////////
     int parse(string cmdStr);
+
+    //echo help
+    int help(string command);
 };
 
 class menu{
