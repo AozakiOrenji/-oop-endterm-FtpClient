@@ -53,11 +53,11 @@ private:
      * FTP_TRANSFER_TYPE_BINARY
      * FTP_TRANSFER_TYPE_UNKNOWN = FTP_TRANSFER_TYPE_BINARY
      */
+    int updateCurrDir();
 public:
     int connect(string url, string username = nullptr,
                 string password = nullptr, int port = 21,
                 bool ftpPassive = true, bool keepDir = false);
-    int updateCurrDir();
     int ls();
     int cd(string dir);
     int ftpGet(string pRemote, string pLocal,

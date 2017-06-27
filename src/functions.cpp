@@ -8,51 +8,72 @@
 #include "wininet_errno.h"
 
 int ftpOpt::connect(string url, string username, string password, int port, bool ftpPassive, bool keepDir){
+
+    //Open Internet session
     hInternet = InternetOpen(nullptr, INTERNET_OPEN_TYPE_DIRECT,
                              nullptr, nullptr, 0);
     if(hInternet == nullptr){
+        //On error goto
         console(_OOP_FTPCLIENT_WININET_ERROR);
-    }else{
-        hFtpSession = InternetConnect(hInternet, url.c_str(), (INTERNET_PORT)port,
-                                      username.c_str(), password.c_str(),
-                                      INTERNET_SERVICE_FTP, ftpPassive?INTERNET_FLAG_PASSIVE:0, 0);
-        if(hFtpSession == nullptr){
-            console(_OOP_FTPCLIENT_WININET_ERROR);
-        }else{
-            ftpOpt_currHost = url;
-            ftpOpt_currUsr = username;
-            ftpOpt_currPass = password;
-            ftpOpt_currPort = port;
-            ftpOpt_ftpPassive = ftpPassive;
-            ftpOpt_connected = true;
-            if(!keepDir){
-                updateCurrDir();
-            }
-            return 0;
-        }
+        return _OOP_FTPCLIENT_FTPOPT_ERROR;
     }
-    return _OOP_FTPCLIENT_FTPOPT_ERROR;
+
+    //Attempt to connect
+    hFtpSession = InternetConnect(hInternet, url.c_str(), (INTERNET_PORT)port,
+                                  username.c_str(), password.c_str(),
+                                  INTERNET_SERVICE_FTP, ftpPassive?INTERNET_FLAG_PASSIVE:0, 0);
+    if(hFtpSession == nullptr){
+        console(_OOP_FTPCLIENT_WININET_ERROR);
+        return _OOP_FTPCLIENT_FTPOPT_ERROR;
+    }
+
+    //OK
+    ftpOpt_currHost = url;
+    ftpOpt_currUsr = username;
+    ftpOpt_currPass = password;
+    ftpOpt_currPort = port;
+    ftpOpt_ftpPassive = ftpPassive;
+    ftpOpt_connected = true;
+    if(!keepDir){
+        updateCurrDir();
+    }
+    return 0;
 }
 
 int ftpOpt::updateCurrDir(){
+    /*
+     * Private function.
+     * Used for update current directory.
+     */
     char tmp[_OOP_FTPCLIENT_PATH_SIZE];
     DWORD currDirSize = _OOP_FTPCLIENT_PATH_SIZE;
+
     if(!FtpGetCurrentDirectory(hFtpSession, tmp, &currDirSize)){
         console(_OOP_FTPCLIENT_WININET_ERROR);
         ftpOpt_currDir = "undefined";
         return _OOP_FTPCLIENT_FTPOPT_ERROR;
     }
+
     ftpOpt_currDir = tmp;
     return 0;
 }
 
 int ftpOpt::ls(){
 
+    /*
+     * List all item in this directory.
+     * It is VERY complex when we made it with wininet.
+     */
+
+    //Define temp container
     HINTERNET hFind;
     WIN32_FIND_DATA fd;
     char currDir[_OOP_FTPCLIENT_PATH_SIZE];
     strcpy(currDir, ftpOpt_currDir.c_str());
+
+    //Get file!
     hFind = FtpFindFirstFile(hFtpSession, currDir, &fd, INTERNET_FLAG_RESYNCHRONIZE, 0);
+
     if(hFind != NULL){
         do{
             console(fd.cFileName);
@@ -74,6 +95,7 @@ int ftpOpt::ls(){
      * closed using the InternetCloseHandle function.
      */
 
+    //Do some clean works (also means reconnect)
     disconnect();
     connect(ftpOpt_currHost, ftpOpt_currUsr, ftpOpt_currPass, ftpOpt_currPort, ftpOpt_ftpPassive, true);
     cd(ftpOpt_currDir);
@@ -83,17 +105,31 @@ int ftpOpt::ls(){
 }
 
 int ftpOpt::cd(string dir){
+
+    /*
+     * Change the current working directory.
+     * Seems easy than ls xd.
+     */
+
     char charDir[_OOP_FTPCLIENT_PATH_SIZE];
     strcpy(charDir, dir.c_str());
+
     if(!FtpSetCurrentDirectory(hFtpSession, charDir)){
         console(_OOP_FTPCLIENT_WININET_ERROR);
         return _OOP_FTPCLIENT_FTPOPT_ERROR;
     };
+
+    //We must get current directory anytime.
     updateCurrDir();
     return 0;
 }
 
 int ftpOpt::ftpGet(string pRemote, string pLocal, bool overwrite){
+
+    /*
+     * Get files from remote server.
+     */
+
     char pathRemote[_OOP_FTPCLIENT_PATH_SIZE];
     char pathLocal[_OOP_FTPCLIENT_PATH_SIZE];
     strcpy(pathRemote, pRemote.c_str());
@@ -115,6 +151,11 @@ int ftpOpt::ftpGet(string pRemote, string pLocal, bool overwrite){
 }
 
 int ftpOpt::ftpPut(string pLocal, string pRemote){
+
+    /*
+     * Put files to remote server.
+     */
+
     char pathRemote[_OOP_FTPCLIENT_PATH_SIZE];
     char pathLocal[_OOP_FTPCLIENT_PATH_SIZE];
     strcpy(pathRemote, pRemote.c_str());
@@ -134,6 +175,11 @@ int ftpOpt::ftpPut(string pLocal, string pRemote){
 }
 
 int ftpOpt::mkdir(string dir){
+
+    /*
+     * Make directory on the remote server.
+     */
+
     char dirName[_OOP_FTPCLIENT_PATH_SIZE];
     strcpy(dirName, dir.c_str());
     if(!FtpCreateDirectory(hFtpSession, dirName)){
@@ -144,6 +190,11 @@ int ftpOpt::mkdir(string dir){
 }
 
 int ftpOpt::rm(string file){
+
+    /*
+     * Remove files from remote server.
+     */
+
     char fileName[_OOP_FTPCLIENT_PATH_SIZE];
     strcpy(fileName, file.c_str());
     if(!FtpDeleteFile(hFtpSession, fileName)){
@@ -154,6 +205,11 @@ int ftpOpt::rm(string file){
 }
 
 int ftpOpt::rmdir(string dir){
+
+    /*
+     * Remove directory from remote server.
+     */
+
     char dirName[_OOP_FTPCLIENT_PATH_SIZE];
     strcpy(dirName, dir.c_str());
     if(!FtpRemoveDirectory(hFtpSession, dirName)){
@@ -164,6 +220,11 @@ int ftpOpt::rmdir(string dir){
 }
 
 int ftpOpt::rename(string oldFile, string newFile){
+
+    /*
+     * Rename files on the remote server.
+     */
+
     char oldFileName[_OOP_FTPCLIENT_PATH_SIZE];
     char newFileName[_OOP_FTPCLIENT_PATH_SIZE];
     strcpy(oldFileName, oldFile.c_str());
@@ -176,6 +237,11 @@ int ftpOpt::rename(string oldFile, string newFile){
 }
 
 int ftpOpt::disconnect(){
+
+    /*
+     * Disconnect from the server.
+     */
+
     if(!(bool)InternetCloseHandle(hFtpSession)){
         console(_OOP_FTPCLIENT_WININET_ERROR);
         return _OOP_FTPCLIENT_FTPOPT_ERROR;
